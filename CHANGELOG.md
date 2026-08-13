@@ -8,7 +8,13 @@ behaviour does not belong here.
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- **SmartRecruiters** support, for postings at `jobs.smartrecruiters.com/{company}/{id}`.
+  SmartRecruiters splits a posting into four named sections (company description, job
+  description, qualifications, additional information) rather than returning one blob. The
+  section headings are preserved, because flattening them would lose which requirements the
+  employer listed as qualifications and which as additional information.
 
 ## [1.1.1] - 2026-08-13
 

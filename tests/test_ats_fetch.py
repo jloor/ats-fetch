@@ -44,6 +44,9 @@ for url, want in [
     ("https://jobs.lever.co/examplecorp/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "Lever"),
     ("https://examplecorp.wd501.myworkdayjobs.com/Careers/job/Remote/Support_JR100000",
      "Workday"),
+    ("https://jobs.smartrecruiters.com/ExampleCorp/1234567890123456", "SmartRecruiters"),
+    ("https://jobs.smartrecruiters.com/ExampleCorp/1234567890123456-senior-engineer",
+     "SmartRecruiters"),
     ("https://example.com/careers/engineering", None),
 ]:
     check(url.split("//")[1][:48], fj.detect(url), want)
@@ -54,6 +57,7 @@ for url, want in [
     ("https://job-boards.greenhouse.io/examplecorp/jobs/1234567890", True),
     ("https://examplecorp.wd501.myworkdayjobs.com/Careers/job/Remote/Support_JR100000", True),
     ("https://www.examplecorp.com/careers/detail/?gh_jid=5678901234", True),
+    ("https://jobs.smartrecruiters.com/ExampleCorp/1234567890123456-senior-engineer", True),
     # Boards. Each of these returns a page full of text that is not a posting.
     ("https://jobs.ashbyhq.com/someboard", False),
     ("https://jobs.ashbyhq.com/examplecorp", False),
