@@ -42,6 +42,8 @@ for url, want in [
     ("https://www.examplecorp.com/careers/detail/?gh_jid=5678901234", "Greenhouse"),
     ("https://jobs.ashbyhq.com/examplecorp/00000000-1111-2222-3333-444444444444", "Ashby"),
     ("https://jobs.lever.co/examplecorp/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", "Lever"),
+    ("https://apply.workable.com/examplecorp/j/ABC1234567", "Workable"),
+    ("https://examplecorp.workable.com/j/ABC1234567", "Workable"),
     ("https://examplecorp.wd501.myworkdayjobs.com/Careers/job/Remote/Support_JR100000",
      "Workday"),
     ("https://jobs.smartrecruiters.com/ExampleCorp/1234567890123456", "SmartRecruiters"),
@@ -58,6 +60,7 @@ for url, want in [
     ("https://examplecorp.wd501.myworkdayjobs.com/Careers/job/Remote/Support_JR100000", True),
     ("https://www.examplecorp.com/careers/detail/?gh_jid=5678901234", True),
     ("https://jobs.smartrecruiters.com/ExampleCorp/1234567890123456-senior-engineer", True),
+    ("https://apply.workable.com/examplecorp/j/ABC1234567", True),
     # Boards. Each of these returns a page full of text that is not a posting.
     ("https://jobs.ashbyhq.com/someboard", False),
     ("https://jobs.ashbyhq.com/examplecorp", False),
