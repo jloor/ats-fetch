@@ -32,6 +32,7 @@ RE_GREENHOUSE = re.compile(r"(?:job-boards|boards)(?:\.eu)?\.greenhouse\.io/([^/
 RE_ASHBY = re.compile(r"jobs\.ashbyhq\.com/([^/]+)/([0-9a-f-]{16,})")
 RE_LEVER = re.compile(r"jobs\.lever\.co/([^/]+)/([0-9a-f-]{16,})")
 RE_WORKDAY = re.compile(r"https://([^.]+)\.([^.]+)\.myworkdayjobs\.com/([^/]+)/job/(.+)$")
+RE_SMARTRECRUITERS = re.compile(r"jobs\.smartrecruiters\.com/([^/]+)/(\d+)")
 
 
 def detect(url):
@@ -48,6 +49,8 @@ def detect(url):
         return "Lever"
     if RE_WORKDAY.search(url):
         return "Workday"
+    if RE_SMARTRECRUITERS.search(url):
+        return "SmartRecruiters"
     return None
 
 
@@ -202,6 +205,38 @@ def looks_like_single_posting(url):
                 or parse_qs(urlparse(url).query))
 
 
+def smartrecruiters(url):
+    """SmartRecruiters publishes a documented Posting API, and it is the only platform here
+    that splits one posting across several named sections rather than returning one blob."""
+    m = RE_SMARTRECRUITERS.search(url)
+    if not m:
+        return None
+    token, jid = m.groups()
+    try:
+        j = json.loads(get(f"https://api.smartrecruiters.com/v1/companies/{token}/postings/{jid}"))
+    except Exception:
+        return None
+    if "name" not in j:
+        return None
+    # Four sections, each with the employer's own heading. Keeping the headings preserves
+    # the shape of what was published; flattening them would lose which requirements were
+    # listed as qualifications rather than as nice-to-haves in additional information.
+    sections = (j.get("jobAd") or {}).get("sections") or {}
+    parts = []
+    for key in ("companyDescription", "jobDescription", "qualifications", "additionalInformation"):
+        sec = sections.get(key) or {}
+        text = detag(sec.get("text") or "")
+        if text:
+            parts.append((sec.get("title") or key) + "\n\n" + text)
+    loc = j.get("location") or {}
+    return {"ats": "SmartRecruiters", "title": j["name"], "raw": j,
+            "location": loc.get("fullLocation") or loc.get("city", ""),
+            "remote": loc.get("remote"), "req": j.get("refNumber", ""),
+            "updated": (j.get("releasedDate") or "")[:10],
+            "url": j.get("postingUrl", url), "apply": j.get("applyUrl", ""),
+            "body": "\n\n".join(parts)}
+
+
 def generic(url):
     """Fallback scrape. Refuses board and listing pages: a directory of open roles is not a
     posting, and archiving one produces a file that looks right and is worthless."""
@@ -220,7 +255,7 @@ def generic(url):
 
 
 def fetch(url):
-    for fn in (greenhouse, ashby, lever, workday):
+    for fn in (greenhouse, ashby, lever, workday, smartrecruiters):
         r = fn(url)
         if r and r.get("body", "").strip():
             return r
