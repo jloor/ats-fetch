@@ -1,122 +1,57 @@
-I scanned all 32 commits of a private repository for secrets before publishing any part of
-it. Clean. No keys, no tokens, nothing.
+Three job postings I was working on disappeared before I finished applying to them. One was
+pulled six days after I submitted. Another died quietly, with no announcement at all. The
+third came off the board before I ever hit send.
 
-Twenty-eight minutes after the public repo went live, I found the requisition ID of a job I
-had applied to and not heard back from sitting in a test fixture, on the internet, under my
-own name.
+What I lost each time was not the job. It was the text: what they had actually asked for,
+what the range actually said, what the hours actually were. You cannot prepare for an
+interview against a page that returns a 404, and when a number moves later you have nothing
+to compare it against.
 
-## What this is
+So I built the thing that stops it, and then pulled that piece out so anyone else can use it.
 
-[ats-fetch](https://github.com/jloor/ats-fetch) takes the URL of a job posting, works out
-which applicant tracking system is behind it, calls that platform's own JSON API, and writes
-the full posting text unedited.
+## The larger thing this came from
+
+I have been running my job search as an engineering problem rather than a spreadsheet.
+Applications, the postings themselves, the answers I have already written for application
+forms, what I can honestly claim and at what level, and a record of every conversation. That
+system is private and stays private, because it holds salary floors, comp research, and
+recruiter names.
+
+Most of it is specific to me and would be useless to anyone else. One component is not.
+
+Archiving the posting turned out to be the load-bearing part of the whole system. Everything
+downstream depends on having the real text: tailoring a résumé against what the employer
+actually wrote, preparing for an interview weeks later, checking whether a number moved
+between the posting and the offer. It was also the step most likely to get skipped, because
+doing it by hand means copying a wall of text into a file at the exact moment you would
+rather be writing the application, usually at the end of a long day.
+
+That is a bad place to leave a manual process.
+
+## What it does
+
+[ats-fetch](https://github.com/jloor/ats-fetch) takes a posting URL, works out which
+applicant tracking system is behind it, calls that platform's own JSON API, and writes the
+full posting text unedited.
 
 Greenhouse, Ashby, Lever, Workday. 282 lines, standard library only, no dependencies.
 
-It exists because postings do not stay put. They get pulled, rewritten, and quietly
-re-priced, and the fields that move are the compensation range, the remote status, and the
-work hours. I wrote it after three postings I was working on disappeared before I finished
-applying to them.
+```
+pip install ats-fetch
+ats-fetch https://jobs.ashbyhq.com/ramp/34413f8d-26bf-4bbc-8ade-eb309a0e2245
+```
 
-The tool is the small part. It had been running privately for a week and it worked. What
-this writeup is actually about is the hour it took to get 282 lines out of a private
-repository and onto the internet without publishing something I did not mean to.
+It captures the fields employers most often edit after posting: the compensation range as
+stated, the location and remote status as stated, the posted date, and the date you captured
+it.
 
-I got that wrong twice.
+**It is not a job scraper.** Scrapers exist to discover jobs: point one at a company and it
+returns everything open. This does a different job. You give it one posting you already care
+about and it keeps that posting exactly as published. The two have different standards of
+correctness. A scraper that misses two
+percent of listings is working fine. An archive that alters one word is not an archive.
 
-## The audit that found the right thing
-
-The private repository holds a job search: applications, salary floors, notes on what I would
-accept, recruiter names. The tool lives next to all of it. So before anything moved I ran the
-obvious check across every commit for anything shaped like a credential.
-
-Nothing. Every match was a 1Password reference, a placeholder, or a literal `dev`.
-
-Then I opened the test fixtures by hand and found my own email address in one, underneath a
-valid DKIM signature over a real message somebody had sent me.
-
-I had put it there deliberately. A webhook parser had broken on three wrong assumptions at
-once, and saving one real payload was the only reliable way to test against the real shape.
-That was the right call. It is also exactly how a personal address ended up in a tracked file
-I was about to publish.
-
-The lesson I wrote down at the time was this. A secret scanner answers one question: did a
-credential get committed. Publication needs a second one: is this file safe for a stranger to
-read. The second question is much bigger, and it covers fixtures, sample data, screenshots,
-error logs, and anything captured from a real system because the real system was the point.
-
-I regenerated the fixture with synthetic values, kept the structure, and moved on satisfied.
-
-## The leak the audit was never designed to find
-
-The public repo went live at 09:39.
-
-Its test file contained a Greenhouse URL, an Ashby UUID, a Lever UUID, a Workday path, and a
-`gh_jid` from an embedded board. Eight identifiers in total, and every one of them was a job I
-had actually applied to. One was an application I had not submitted yet. One was a
-requisition a recruiter had introduced me to that week.
-
-They were there because building the fixtures had been easy. I had a folder full of archived
-job descriptions, so I pulled real URLs out of it, which is the fastest way to get realistic
-test data and the reason the test data was not fiction.
-
-The pre-publication audit had been clean. It searched for my domain, for `vault/`, for
-`applications/`, for the identity strings I knew to worry about. It never searched for company
-names, because at no point had I written down that company names were the thing at risk.
-
-That is the whole failure. The audit did not fail. The audit ran, passed, and was answering a
-question I had chosen myself.
-
-Fixed at 10:07. Twenty-eight minutes, on a repository with no stars, no forks, and no traffic,
-which is luck rather than mitigation. Because the repo was minutes old I could amend and force
-push instead of adding a commit, so the identifiers are gone from the history rather than
-sitting one `git log -p` away.
-
-Every URL in the tests is now synthetic. `examplecorp`, `acmeco`, invented UUIDs. The URL
-*shapes* are what the detection tests exercise, so nothing lost coverage, and synthetic
-fixtures do not rot when a requisition closes.
-
-## The third one, which is smaller and more embarrassing
-
-In between those two, I published the wrong README twice.
-
-The first push carried a version I had already revised. I amended and force pushed. The
-output said `6 files changed, 557 insertions` and I read it as done.
-
-It was not done. `git commit --amend` rebuilds a commit from the index, and I had never
-staged the README. The amend rewrote the same content with a new timestamp, twice, and both
-times the terminal told me so: an amend that picks up 35 new lines does not report the same
-insertion count as the commit before it. The number was right there and I did not read it.
-
-I only caught it by querying the remote and comparing line counts, which is the check I
-should have been running from the start instead of trusting a summary of what I had intended.
-
-## The pattern, which is not new
-
-Three failures in one hour, and they are the same failure:
-
-**A check that passes tells you the thing you looked for is absent. It does not tell you the
-thing is safe.**
-
-The secret scan proved no credentials were committed. It said nothing about a personal email
-in a fixture. The pre-publication grep proved my identity strings were gone. It said nothing
-about eight company names. The amend reported success. It was reporting on an empty index.
-
-My previous project had four instances of this, and the version there was *a passing test
-proves the assertion held, it does not prove the code ran*. I wrote a page about it. It did
-not stop me repeating the shape a week later in a different medium, which is worth being
-honest about: knowing the failure mode by name does not make you immune to it, because each
-instance arrives disguised as a different kind of task.
-
-The one thing that did work, both times, was **looking at the actual artifact instead of the
-report about it**. The fixture leak was found by opening the file. The company-name leak was
-found by grepping the published tree against a list of every company in my pipeline, which is
-a check I only wrote after being burned once.
-
-That check is now in the release spec. Audit a public repository against the *contents* of
-the private one, not against the paths and identity strings you happened to think of.
-
-## What the tool actually does, and the part worth stealing
+## The part worth stealing
 
 Four endpoints, all public, all unauthenticated, none documented anywhere convenient:
 
@@ -127,60 +62,84 @@ Four endpoints, all public, all unauthenticated, none documented anywhere conven
 | Lever | `api.lever.co/v0/postings/{token}/{id}?mode=json` |
 | Workday | `{tenant}.{sub}.myworkdayjobs.com/wday/cxs/{tenant}/{site}/job/{path}` |
 
-Two of them have a catch, and one of those is the only genuinely clever thing in the file.
+Going through the API rather than scraping the page is what makes the result trustworthy. A
+scrape gives you the posting plus the navigation, the cookie banner, and whatever the design
+team shipped that week. The API gives you the fields the employer filled in.
+
+Two of them have a catch.
 
 **Ashby returns the entire board**, not the job you asked for, so you filter by matching the
-UUID against each entry's `jobUrl`. `includeCompensation=true` is what gets you the pay range
-and it is off by default.
+UUID against each entry's `jobUrl`. `includeCompensation=true` is what gets you the pay range,
+and it is off by default, which means the single most important field is the one you have to
+know to ask for.
 
 **Greenhouse embedded boards carry no token.** When a company hosts its own careers page the
-link is `company.com/careers/detail/?gh_jid=5678901234`, and the board token the API needs is
+link looks like `company.com/careers/detail/?gh_jid=<id>`, and the board token the API needs is
 nowhere in the URL. So the tool derives it: take the hostname labels, strip `careers`, `jobs`
-and `apply`, then strip company suffixes like `hq`, `inc`, `labs` and `technologies`, and
-probe the API with each candidate until one returns a real job. That is how it works on boards
-that do not look like Greenhouse at all.
+and `apply`, then strip company suffixes like `hq`, `inc`, `labs` and `technologies`, and probe
+the API with each candidate until one returns a real job. That is what makes it work on boards
+that do not look like Greenhouse at all, which is most of the interesting ones.
 
-The subtlest bug in the file is an ordering one. Several of these APIs return the description
-**entity-escaped, and at least one returns it escaped twice**. Strip the tags before
-unescaping and the markup survives as literal words: `span`, `div class`,
-`data-ccp-parastyle`. Nothing crashes. The text just quietly fills with markup vocabulary that
-then poisons anything you do with it downstream. So it unescapes to a fixed point first, then
-strips.
+## Three decisions that are the point of the tool
 
-## The one refactor, and how it was proved
+**It saves the text unedited.** No summary, no cleanup, and it does not fix the employer's
+typos. I wanted a summary at first, and that is the wrong instinct. The archive is only worth
+having if it is admissible, and the moment it becomes a paraphrase it stops settling any
+argument about what was published.
 
-The private version shelled out to `curl`. A tool whose selling point is "no dependencies"
-should not require a binary that is missing on a default Windows install, so it moved to
-`urllib`.
+**It refuses to archive a board page.** A directory of open roles returns plenty of text, so
+length cannot tell it apart from a real posting. Archive one by accident and you get a file
+that looks exactly like an archive and contains no job, which you find out six weeks later
+when you need it. It checks the URL shape and exits with an explanation instead.
 
-That is the kind of change that is obviously safe and quietly is not, because this function
-produces an archive of record. So the change was proved rather than assumed: capture output
-from five live postings across all four platforms first, make the change, capture again,
-compare.
+**It unescapes before it strips tags.** Several of these APIs return the description
+entity-escaped, and at least one returns it escaped twice. Strip the tags first and the markup
+survives as literal words: `span`, `div class`, `data-ccp-parastyle`. Nothing crashes. The text
+just quietly fills with markup vocabulary, which then poisons anything you do with it
+afterwards. This one cost me an afternoon, and it is why the ordering carries a comment.
 
-Byte for byte identical on all five.
+## Taking one piece out of a private repository
 
-The same pass dropped a user-agent string that claimed to be Chrome 126. These are public
-APIs published to serve public job boards. There is no reason to lie to them, and all four
-accept `ats-fetch/1.1` without complaint.
+The tool grew up next to the private half of the system, so extracting it was its own small
+project.
+
+The decision that mattered was to stop treating it as an export. My first plan was to copy the
+shareable parts out and delete the rest on the way, which is fine once and untenable forever,
+because I want to keep publishing as the code changes. A deletion step that has to be correct
+every single time is not a boundary, it is a habit. So the public repository is the upstream
+now, and the private one will consume it as a dependency.
+
+Measuring first is what made that cheap. The whole engine reached into private content in
+exactly four places. The problem was never the size of the coupling; it was that I had been
+about to solve it with care rather than with structure.
+
+The rest was ordinary discipline, and the decision log has it in full: a fresh repository with
+no shared history, because the private history holds things a fork would carry with it.
+Synthetic test fixtures, after the real ones turned out to encode more about my own pipeline
+than I had noticed. An HTTP client swap proved by capturing five live postings before and
+after and diffing them byte for byte rather than assuming.
+
+The useful lesson from that hour, and the decision log names the specific mistakes: every
+check I wrote found what I had thought to look for and nothing else. That is worth knowing
+before anyone extracts anything from a repository that holds private data.
 
 ## Deliberately not claimed
 
-- **Twenty-eight minutes of exposure is not proof nobody saw it.** No stars, no forks, no
-  clones I can see, and the identifiers are out of the history. That is a good outcome, not
-  evidence of no harm.
-- **The endpoints are not a discovery.** At least one public article documents the same six
-  ATS APIs. What is here is working code and the two catches, not the existence of the URLs.
-- **Nobody else uses this.** It is on PyPI and it has no users. Everything above is about how
-  it was built and shipped, not about adoption.
-- **The tests do not hit the network.** 29 assertions covering ATS detection, the board-page
+- **Nobody else uses this yet.** It is on PyPI and it has no users. Everything here is about
+  how it was built, not about adoption.
+- **The endpoints are not a discovery.** At least one public article documents the same ATS
+  APIs. What is here is working code, plus the two catches that cost me time.
+- **Four platforms are handled properly. Everything else is a fallback.** Unrecognised sites
+  get their page fetched and tags stripped, which is lossier and barely tested. Treat that
+  output as a draft.
+- **The tests do not touch the network.** 29 assertions covering ATS detection, the board-page
   refusal, and the unescape order. They cannot tell you an endpoint still works, only that a
-  URL is still routed to the right adapter.
-- **The generic HTML fallback is lossier and barely tested.** Four platforms are handled
-  properly. Everything else gets tags stripped off a page and is best treated as a draft.
-- **One person, one machine, one week of real use.**
+  URL is routed to the right adapter. If a platform changes its API, the suite stays green.
+- **No change detection.** Comparing two captures of the same requisition to see which words an
+  employer edited is the obvious next feature and the one I actually want. It is not built.
+- **One person, one machine, a few weeks of real use.**
 
 ## Read the actual work
 
-The decision log records what was ambiguous and what got traded away, including the two
-publication mistakes as decisions rather than as anecdotes.
+The decision log records what was ambiguous, what got chosen, and what was traded away,
+including the mistakes made while getting this out of a private repository.
