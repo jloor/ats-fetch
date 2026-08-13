@@ -10,6 +10,37 @@ behaviour does not belong here.
 
 Nothing yet.
 
+## [1.1.1] - 2026-08-13
+
+### Fixed
+
+- Replaced a real job requisition ID, used as an example URL in the README, with a synthetic
+  one. The 1.1.0 page on PyPI still shows the original, because the metadata of a published
+  release cannot be edited.
+
+### Notes
+
+- 1.1.0 was uploaded to PyPI but never tagged here. No commit ever matched its contents, so
+  tagging one would misrepresent what was released. **1.1.1 is the first tagged package
+  release.**
+- The user-agent stays `ats-fetch/1.1`. A patch release does not change it.
+
+## [1.1.0] - 2026-08-13
+
+### Added
+
+- Published to PyPI. `pip install ats-fetch` provides an `ats-fetch` console command, so
+  the tool no longer has to be cloned to be used.
+
+### Changed
+
+- The user-agent now reports `ats-fetch/1.1`.
+
+### Notes
+
+- Still no dependencies. That is a constraint rather than an accident: adding one would mean
+  the tool stops working on a machine that has only a Python interpreter.
+
 ## [1.0.0] - 2026-08-13
 
 First public release.
@@ -44,5 +75,6 @@ First public release.
   Stripping first leaves the markup behind as literal words such as `span` and `div class`,
   which then poison anything done downstream with the text.
 
-[Unreleased]: https://github.com/jloor/ats-fetch/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/jloor/ats-fetch/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/jloor/ats-fetch/releases/tag/v1.1.1
 [1.0.0]: https://github.com/jloor/ats-fetch/releases/tag/v1.0.0

@@ -5,9 +5,16 @@
 Archive a job posting verbatim, from its URL, using the applicant tracking system's own API.
 
 ```
+pip install ats-fetch
+ats-fetch https://jobs.ashbyhq.com/ramp/34413f8d-26bf-4bbc-8ade-eb309a0e2245
+```
+
+Or run the single file with no install at all:
+
+```
 git clone https://github.com/jloor/ats-fetch
 cd ats-fetch
-python3 ats_fetch.py https://jobs.ashbyhq.com/ramp/34413f8d-26bf-4bbc-8ade-eb309a0e2245
+python3 ats_fetch.py <posting-url>
 ```
 
 Python 3.9 or newer. No dependencies, standard library only.
@@ -78,7 +85,7 @@ UUID against each entry's `jobUrl`. `includeCompensation=true` is what gets you 
 range, and it is off by default.
 
 **Greenhouse embedded boards have no token in the URL.** When a company hosts its own
-careers page, the posting link looks like `company.com/careers/detail/?gh_jid=7961297`. The
+careers page, the posting link looks like `company.com/careers/detail/?gh_jid=5678901234`. The
 board token you need for the API is nowhere in it. `ats_fetch.py` recovers it: it takes the
 hostname labels, strips `careers`, `jobs`, and `apply`, then strips company suffixes like
 `hq`, `inc`, `labs`, `technologies`, and probes the API with each candidate until one
@@ -87,11 +94,14 @@ returns a real job. That is how it works on boards that do not look like Greenho
 ## Usage
 
 ```
-python3 ats_fetch.py <url>                  print the archive block to stdout
-python3 ats_fetch.py <url> --new <dir>      write a fresh job-description.md
-python3 ats_fetch.py <url> --append <dir>   append the block to an existing one
-python3 ats_fetch.py <url> --json           dump the raw API payload
+ats-fetch <url>                  print the archive block to stdout
+ats-fetch <url> --new <dir>      write a fresh job-description.md
+ats-fetch <url> --append <dir>   append the block to an existing one
+ats-fetch <url> --json           dump the raw API payload
 ```
+
+Substitute `python3 ats_fetch.py` for `ats-fetch` if you cloned rather than installed. The
+arguments are identical.
 
 The output is a metadata table followed by the full posting text. This is real output, not a
 tidied-up version of it:
