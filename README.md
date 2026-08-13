@@ -159,6 +159,12 @@ python3 tests/test_ats_fetch.py
 No network. They cover ATS detection including the embedded-board case, the board-page
 refusal, and the unescape order.
 
+## Which platforms are possible, and which are not
+
+[`docs/ats-survey.md`](docs/ats-survey.md) records what was probed on each platform: the
+endpoints, the quirks, and the four that cannot be supported with the reason for each. Read it
+before proposing a new adapter. Three of those four fail for reasons no adapter can fix.
+
 ## Contributions
 
 New ATS adapters are very welcome. If a platform publishes a JSON posting API, add a fetcher
