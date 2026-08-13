@@ -31,6 +31,8 @@ UA = "ats-fetch/1.1 (+https://github.com/jloor/ats-fetch)"
 RE_GREENHOUSE = re.compile(r"(?:job-boards|boards)(?:\.eu)?\.greenhouse\.io/([^/]+)/jobs/(\d+)")
 RE_ASHBY = re.compile(r"jobs\.ashbyhq\.com/([^/]+)/([0-9a-f-]{16,})")
 RE_LEVER = re.compile(r"jobs\.lever\.co/([^/]+)/([0-9a-f-]{16,})")
+RE_WORKABLE = re.compile(r"apply\.workable\.com/([^/]+)/j/([A-Za-z0-9]+)")
+RE_WORKABLE_SUB = re.compile(r"https?://([^./]+)\.workable\.com/j/([A-Za-z0-9]+)")
 RE_WORKDAY = re.compile(r"https://([^.]+)\.([^.]+)\.myworkdayjobs\.com/([^/]+)/job/(.+)$")
 RE_SMARTRECRUITERS = re.compile(r"jobs\.smartrecruiters\.com/([^/]+)/(\d+)")
 
@@ -47,6 +49,8 @@ def detect(url):
         return "Ashby"
     if RE_LEVER.search(url):
         return "Lever"
+    if RE_WORKABLE.search(url) or RE_WORKABLE_SUB.search(url):
+        return "Workable"
     if RE_WORKDAY.search(url):
         return "Workday"
     if RE_SMARTRECRUITERS.search(url):
@@ -198,10 +202,14 @@ def looks_like_single_posting(url):
     """Does this URL point at one requisition, rather than a board of many? No network.
 
     A board page still returns plenty of text, so length alone cannot tell them apart.
-    The signal is in the path: a long numeric id, a UUID prefix, or a /job/<x>/<y> shape.
+    The signal is in the path: a long numeric id, a UUID prefix, a /job/<x>/<y> shape, or a
+    /j/<code> segment. The last one is Workable's posting shape, and it matters even though
+    the Workable fetcher runs first: if that API call fails the URL falls through to here,
+    and reporting a real posting as a board page would be a wrong diagnosis.
     """
     path = urlparse(url).path.rstrip("/")
-    return bool(re.search(r"/\d{4,}|[0-9a-f]{8}-[0-9a-f]{4}|/job[s]?/[^/]+/[^/]+", path)
+    return bool(re.search(r"/\d{4,}|[0-9a-f]{8}-[0-9a-f]{4}|/job[s]?/[^/]+/[^/]+"
+                          r"|/j/[A-Za-z0-9]{6,}", path)
                 or parse_qs(urlparse(url).query))
 
 
@@ -235,6 +243,39 @@ def smartrecruiters(url):
             "updated": (j.get("releasedDate") or "")[:10],
             "url": j.get("postingUrl", url), "apply": j.get("applyUrl", ""),
             "body": "\n\n".join(parts)}
+def workable(url):
+    """Workable serves the whole board from one endpoint and omits every description unless
+    you ask for them, so the request carries details=true and the posting is picked out of
+    the result by shortcode.
+
+    ⚠️ The bare share link, apply.workable.com/j/<shortcode>, carries no company and is not
+    supported. There is no shortcode-only endpoint and the page is client rendered, so
+    nothing in that URL identifies the board to query. Use the company-scoped form,
+    apply.workable.com/<company>/j/<shortcode>, which is what the board itself links to.
+    """
+    m = RE_WORKABLE.search(url) or RE_WORKABLE_SUB.search(url)
+    if not m:
+        return None
+    token, code = m.groups()
+    try:
+        board = json.loads(get(
+            f"https://apply.workable.com/api/v1/widget/accounts/{token}?details=true"))
+    except Exception:
+        return None
+    j = next((x for x in board.get("jobs", []) if x.get("shortcode") == code), None)
+    if not j:
+        return None
+    where = ", ".join(x for x in (j.get("city"), j.get("state"), j.get("country")) if x)
+    return {"ats": "Workable", "title": j.get("title", ""), "raw": j,
+            "location": where, "remote": j.get("telecommuting"),
+            "team": j.get("department", ""), "req": j.get("shortcode", ""),
+            "updated": (j.get("published_on") or "")[:10],
+            # Workable's own url field is the bare share link, which carries no company and
+            # so cannot be re-fetched by this tool. Record the company-scoped form instead,
+            # so the archive's canonical URL still works when someone runs it again.
+            "url": f"https://apply.workable.com/{token}/j/{code}",
+            "apply": j.get("application_url", ""),
+            "body": detag(j.get("description", ""))}
 
 
 def generic(url):
@@ -255,7 +296,7 @@ def generic(url):
 
 
 def fetch(url):
-    for fn in (greenhouse, ashby, lever, workday, smartrecruiters):
+    for fn in (greenhouse, ashby, lever, workday, smartrecruiters, workable):
         r = fn(url)
         if r and r.get("body", "").strip():
             return r

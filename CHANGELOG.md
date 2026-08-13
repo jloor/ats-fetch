@@ -15,6 +15,13 @@ behaviour does not belong here.
   description, qualifications, additional information) rather than returning one blob. The
   section headings are preserved, because flattening them would lose which requirements the
   employer listed as qualifications and which as additional information.
+- **Workable** support, for postings at `apply.workable.com/{company}/j/{shortcode}` and the
+  `{company}.workable.com/j/{shortcode}` form that redirects to it. Workable omits every
+  description unless the request asks for them, so the board is fetched with `details=true`
+  and the posting is picked out by shortcode.
+  ⚠️ The bare share link `apply.workable.com/j/{shortcode}` is **not supported**. It carries
+  no company, there is no shortcode-only endpoint, and the page is client rendered, so
+  nothing in that URL identifies which board to query.
 
 ## [1.1.1] - 2026-08-13
 
