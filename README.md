@@ -1,5 +1,7 @@
 # ats-fetch
 
+[![tests](https://github.com/jloor/ats-fetch/actions/workflows/ci.yml/badge.svg)](https://github.com/jloor/ats-fetch/actions/workflows/ci.yml)
+
 Archive a job posting verbatim, from its URL, using the applicant tracking system's own API.
 
 ```
@@ -20,6 +22,42 @@ Aggregators are not the record either. They publish estimated salaries the emplo
 stated, and they drop the posting when the employer does.
 
 This saves the real text, from the source, before it changes.
+
+**It is not a job scraper.** Scrapers exist to discover jobs: you point one at a company, or
+at many companies, and it returns everything currently open. This does a different job. You
+give it one posting you already care about, and it keeps that posting exactly as published.
+
+The difference is not cosmetic, because the two have different standards of correctness. A
+scraper that misses two percent of listings is working fine. An archive that alters one word
+is not an archive.
+
+## When this matters
+
+**The range moves between the posting and the offer.** You applied against a published band.
+Weeks later the number on the table is lower, and the live posting no longer says what it said
+when you read it. The archived copy is what was published on the day you applied.
+
+**The requisition is pulled while you are still in process.** Your interview is Monday and the
+posting is gone. You cannot prepare against a page that returns a 404, and asking the recruiter
+to resend the description is not a strong opening move.
+
+**Remote turns out to mean something else.** "Remote - US" on the day you applied, "hybrid,
+three days on site" by the time it comes up on a call. One of you is misremembering and only
+one of you can prove it.
+
+**You cannot remember which one wanted what.** Eleven applications in six weeks, and the
+company asking you about Terraform is not the company you think it is.
+
+**You are working out what a level actually pays.** Published employer ranges, gathered across
+many companies, instead of an aggregator's estimate. Several jurisdictions now require a range
+in the posting, which makes the posting the primary source and worth keeping.
+
+**You want to see what an employer changed.** Two captures of the same requisition, weeks
+apart, show you exactly which words moved. Nothing here does that comparison for you yet, and
+it is the most obvious thing to build next.
+
+I wrote this after three postings I was working on disappeared before I finished applying to
+them.
 
 ## The part worth stealing
 
