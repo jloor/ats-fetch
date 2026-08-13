@@ -25,7 +25,7 @@ from urllib.parse import urlparse, parse_qs
 
 # Honest identification. These are public JSON APIs and there is no reason to claim to be
 # a browser.
-UA = "ats-fetch/1.1 (+https://github.com/jloor/ats-fetch)"
+UA = "ats-fetch/1.2 (+https://github.com/jloor/ats-fetch)"
 
 # One source of truth for URL shapes, so detect() and the fetchers cannot disagree.
 RE_GREENHOUSE = re.compile(r"(?:job-boards|boards)(?:\.eu)?\.greenhouse\.io/([^/]+)/jobs/(\d+)")

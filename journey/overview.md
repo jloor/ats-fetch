@@ -34,7 +34,8 @@ That is a bad place to leave a manual process.
 applicant tracking system is behind it, calls that platform's own JSON API, and writes the
 full posting text unedited.
 
-Greenhouse, Ashby, Lever, Workday. 282 lines, standard library only, no dependencies.
+Greenhouse, Ashby, Lever, Workday, SmartRecruiters, Workable. Standard library only, no
+dependencies.
 
 ```
 pip install ats-fetch
@@ -71,7 +72,8 @@ Two of them have a catch.
 **Ashby returns the entire board**, not the job you asked for, so you filter by matching the
 UUID against each entry's `jobUrl`. `includeCompensation=true` is what gets you the pay range,
 and it is off by default, which means the single most important field is the one you have to
-know to ask for.
+know to ask for. **Workable** does the same thing in a different way: it omits every
+description unless the request carries `details=true`.
 
 **Greenhouse embedded boards carry no token.** When a company hosts its own careers page the
 link looks like `company.com/careers/detail/?gh_jid=<id>`, and the board token the API needs is
@@ -129,12 +131,17 @@ before anyone extracts anything from a repository that holds private data.
   how it was built, not about adoption.
 - **The endpoints are not a discovery.** At least one public article documents the same ATS
   APIs. What is here is working code, plus the two catches that cost me time.
-- **Four platforms are handled properly. Everything else is a fallback.** Unrecognised sites
+- **Six platforms are handled properly. Everything else is a fallback.** Unrecognised sites
   get their page fetched and tags stripped, which is lossier and barely tested. Treat that
   output as a draft.
 - **The tests do not touch the network.** 29 assertions covering ATS detection, the board-page
   refusal, and the unescape order. They cannot tell you an endpoint still works, only that a
   URL is routed to the right adapter. If a platform changes its API, the suite stays green.
+- **Four more platforms were investigated and not shipped.** Breezy HR publishes a listing
+  feed with no bodies, Manatal exposes UUIDs its posting URLs do not carry, Recruitee postings
+  live on customer-owned domains, and HireHive works but no live tenant with a real
+  description could be found to verify it against. The reasons are written up in
+  [`docs/ats-survey.md`](https://github.com/jloor/ats-fetch/blob/main/docs/ats-survey.md).
 - **No change detection.** Comparing two captures of the same requisition to see which words an
   employer edited is the obvious next feature and the one I actually want. It is not built.
 - **One person, one machine, a few weeks of real use.**

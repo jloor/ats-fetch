@@ -8,6 +8,10 @@ behaviour does not belong here.
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [1.2.0] - 2026-08-13
+
 ### Added
 
 - **SmartRecruiters** support, for postings at `jobs.smartrecruiters.com/{company}/{id}`.
@@ -22,6 +26,15 @@ behaviour does not belong here.
   ⚠️ The bare share link `apply.workable.com/j/{shortcode}` is **not supported**. It carries
   no company, there is no shortcode-only endpoint, and the page is client rendered, so
   nothing in that URL identifies which board to query.
+
+### Notes
+
+- `looks_like_single_posting()` now recognises a `/j/{code}` path segment, so a Workable
+  posting that falls through to the generic handler is not misreported as a board page.
+- [`docs/ats-survey.md`](docs/ats-survey.md) records what was probed on every platform,
+  including four that cannot be supported and why. Three of those four fail for reasons no
+  adapter can fix.
+- The user-agent now reports `ats-fetch/1.2`.
 
 ## [1.1.1] - 2026-08-13
 
@@ -88,6 +101,7 @@ First public release.
   Stripping first leaves the markup behind as literal words such as `span` and `div class`,
   which then poison anything done downstream with the text.
 
-[Unreleased]: https://github.com/jloor/ats-fetch/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/jloor/ats-fetch/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/jloor/ats-fetch/releases/tag/v1.2.0
 [1.1.1]: https://github.com/jloor/ats-fetch/releases/tag/v1.1.1
 [1.0.0]: https://github.com/jloor/ats-fetch/releases/tag/v1.0.0
