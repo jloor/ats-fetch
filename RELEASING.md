@@ -30,11 +30,19 @@ git commit -am "release: v1.1.0"
 git push
 git tag -a v1.1.0 -m "v1.1.0"
 git push origin v1.1.0
-gh release create v1.1.0 --notes-file /tmp/notes.md
+gh release create v1.1.0 --generate-notes
 ```
 
-`gh release create v1.1.0 --generate-notes` writes the notes from commits and merged pull
-requests instead. Use that when the release is small and the commit messages already say it.
+`--generate-notes` builds the notes from the commits and merged pull requests since the last
+tag, and credits contributors automatically. That is the default here, and it is the reason
+commit messages are written for a reader rather than for the author.
+
+⚠️ **It has nothing to work from on a first release.** With no previous tag there is no range
+to summarise, so `v1.0.0` produces a nearly empty page. Write that one by hand, or generate it
+and then edit the release on GitHub. Every release after it has real material.
+
+Use `--notes-file <path>` instead when a release needs an explanation the commits do not carry,
+such as a breaking change with a migration step.
 
 6. Check that CI is green on the tag before announcing it anywhere.
 
